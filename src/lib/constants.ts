@@ -1,4 +1,4 @@
-import type { CaseStatus, Priority } from "@prisma/client";
+import type { CaseStatus, Priority, Role } from "@prisma/client";
 
 /** Case categories offered at creation time. */
 export const CASE_CATEGORIES = [
@@ -38,6 +38,23 @@ export const STATUS_META: Record<CaseStatus, Meta> = {
   CLOSED: { label: "Closed", className: "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300" },
   REOPENED: { label: "Reopened", className: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300" },
 };
+
+export const ROLE_META: Record<Role, Meta> = {
+  CITIZEN: { label: "Citizen", className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" },
+  STAFF: { label: "Staff", className: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
+  MANAGER: { label: "Manager", className: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300" },
+  ADMIN: { label: "Admin", className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" },
+};
+
+/** Whether a role is tied to a department (staff work a dept; managers run one). */
+export const ROLE_NEEDS_DEPARTMENT: Record<Role, boolean> = {
+  CITIZEN: false,
+  STAFF: true,
+  MANAGER: true,
+  ADMIN: false,
+};
+
+export const ROLES: Role[] = ["CITIZEN", "STAFF", "MANAGER", "ADMIN"];
 
 export const PRIORITIES: Priority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 export const STATUSES: CaseStatus[] = [

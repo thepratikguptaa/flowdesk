@@ -17,6 +17,8 @@ import { AttachmentsPanel } from "@/components/cases/attachments-panel";
 import { CaseStatusControl } from "@/components/cases/case-status-control";
 import { CaseAssignControl } from "@/components/cases/case-assign-control";
 import { CommentSection } from "@/components/cases/comment-section";
+import { CaseSummary } from "@/components/cases/case-summary";
+import { isAIConfigured } from "@/lib/ai/azure";
 
 export const metadata: Metadata = { title: "Case detail" };
 
@@ -123,6 +125,19 @@ export default async function CaseDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          {isAIConfigured() && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  AI summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CaseSummary caseId={kase.id} />
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Description</CardTitle>

@@ -5,7 +5,8 @@ import type { Prisma, CaseStatus, Priority } from "@prisma/client";
 
 import { requireRole } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { STATUS_META, PRIORITY_META } from "@/lib/constants";
+import { STATUS_META, PRIORITY_META, ROLE_META } from "@/lib/constants";
+import type { Role } from "@prisma/client";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,28 +57,45 @@ export default async function AuditPage({
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // Resolve user ids referenced by assignment changes → names.
+  // Resolve entity ids referenced by changes → human names.
   const userIds = new Set<string>();
+  const deptIds = new Set<string>();
   for (const log of logs) {
     if (log.field === "assigneeId") {
       if (log.oldValue) userIds.add(log.oldValue);
       if (log.newValue) userIds.add(log.newValue);
     }
+    if (log.field === "departmentId") {
+      if (log.oldValue) deptIds.add(log.oldValue);
+      if (log.newValue) deptIds.add(log.newValue);
+    }
   }
-  const userRows = await prisma.user.findMany({
-    where: { id: { in: [...userIds] } },
-    select: { id: true, name: true },
-  });
+  const [userRows, deptRows] = await Promise.all([
+    prisma.user.findMany({
+      where: { id: { in: [...userIds] } },
+      select: { id: true, name: true },
+    }),
+    prisma.department.findMany({
+      where: { id: { in: [...deptIds] } },
+      select: { id: true, name: true },
+    }),
+  ]);
   const userName = new Map(userRows.map((u) => [u.id, u.name]));
+  const deptName = new Map(deptRows.map((d) => [d.id, d.name]));
 
   // Humanize a stored old/new value for display.
   function fmtValue(field: string | null, value: string | null): string {
     if (field === "assigneeId") {
       return value ? (userName.get(value) ?? "Unknown user") : "Unassigned";
     }
+    if (field === "departmentId") {
+      return value ? (deptName.get(value) ?? "Unknown department") : "None";
+    }
     if (value === null) return "—";
     if (field === "status") return STATUS_META[value as CaseStatus]?.label ?? value;
     if (field === "priority") return PRIORITY_META[value as Priority]?.label ?? value;
+    if (field === "role") return ROLE_META[value as Role]?.label ?? value;
+    if (field === "isActive") return value === "true" ? "Active" : "Inactive";
     if (field === "dueDate") {
       const d = new Date(value);
       return Number.isNaN(d.getTime())

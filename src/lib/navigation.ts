@@ -28,7 +28,7 @@ const NAV: NavItem[] = [
   { label: "New case", href: "/cases/new", icon: PlusCircle },
   { label: "Departments", href: "/departments", icon: Building2, minRole: "ADMIN" },
   { label: "Analytics", href: "/analytics", icon: BarChart3, minRole: "MANAGER" },
-  { label: "Users", href: "/users", icon: Users, minRole: "ADMIN", soon: true },
+  { label: "Users", href: "/users", icon: Users, minRole: "ADMIN" },
   { label: "Audit log", href: "/audit", icon: ScrollText, minRole: "ADMIN" },
 ];
 

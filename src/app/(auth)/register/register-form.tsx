@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { useFormStatus } from "react-dom";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 import { registerUser, type RegisterState } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -16,22 +16,34 @@ function FieldError({ errors }: { errors?: string[] }) {
   return <p className="text-xs text-destructive">{errors[0]}</p>;
 }
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? "Creating account…" : "Create account"}
-    </Button>
-  );
-}
-
 export function RegisterForm() {
-  const [state, formAction] = useActionState<RegisterState, FormData>(registerUser, {});
   const router = useRouter();
+  const [state, setState] = useState<RegisterState>({});
+  const [pending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (state.success) router.push("/login?registered=1");
-  }, [state.success, router]);
+  function onSubmit(formData: FormData) {
+    startTransition(async () => {
+      const res = await registerUser({}, formData);
+      if (!res.success) {
+        setState(res);
+        return;
+      }
+      // Sign the new account straight in so they land on the dashboard, not
+      // back at the login screen.
+      const signInRes = await signIn("credentials", {
+        email: String(formData.get("email") ?? ""),
+        password: String(formData.get("password") ?? ""),
+        redirect: false,
+      });
+      if (signInRes?.error) {
+        // Account was created but auto-login failed — fall back to sign-in.
+        router.push("/login?registered=1");
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
+    });
+  }
 
   return (
     <div>
@@ -44,7 +56,7 @@ export function RegisterForm() {
         </p>
       </div>
 
-      <form action={formAction} className="space-y-4">
+      <form action={onSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="name">Full name</Label>
           <Input id="name" name="name" autoComplete="name" required placeholder="Jane Doe" />
@@ -94,7 +106,9 @@ export function RegisterForm() {
           </p>
         )}
 
-        <SubmitButton />
+        <Button type="submit" disabled={pending} className="w-full">
+          {pending ? "Creating account…" : "Create account"}
+        </Button>
       </form>
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
