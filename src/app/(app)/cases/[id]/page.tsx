@@ -5,14 +5,18 @@ import { Pencil } from "lucide-react";
 
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { canViewCase, canManageCase } from "@/lib/auth/rbac";
+import { canViewCase, canManageCase, can } from "@/lib/auth/rbac";
+import { availableStatusTargets } from "@/lib/cases/workflow";
 import { formatCaseNumber } from "@/lib/constants";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge, PriorityBadge } from "@/components/cases/case-badges";
+import { PriorityBadge } from "@/components/cases/case-badges";
 import { CaseTimeline } from "@/components/cases/case-timeline";
 import { AttachmentsPanel } from "@/components/cases/attachments-panel";
+import { CaseStatusControl } from "@/components/cases/case-status-control";
+import { CaseAssignControl } from "@/components/cases/case-assign-control";
+import { CommentSection } from "@/components/cases/comment-section";
 
 export const metadata: Metadata = { title: "Case detail" };
 
@@ -46,6 +50,10 @@ export default async function CaseDetailPage({
         orderBy: { createdAt: "desc" },
         include: { uploadedBy: { select: { name: true } } },
       },
+      comments: {
+        orderBy: { createdAt: "asc" },
+        include: { author: { select: { name: true } } },
+      },
     },
   });
 
@@ -58,6 +66,25 @@ export default async function CaseDetailPage({
     (kase.reporterId === user.id &&
       (kase.status === "SUBMITTED" || kase.status === "UNDER_REVIEW"));
 
+  const canAssign =
+    can(user.role, "case:assign") &&
+    (user.role === "ADMIN" ||
+      (user.role === "MANAGER" && user.departmentId === kase.departmentId));
+
+  const members = canAssign
+    ? await prisma.user.findMany({
+        where: {
+          departmentId: kase.departmentId,
+          role: { in: ["STAFF", "MANAGER"] },
+          isActive: true,
+        },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      })
+    : [];
+
+  const statusTargets = availableStatusTargets(user, kase);
+
   const attachments = kase.attachments.map((a) => ({
     id: a.id,
     filename: a.filename,
@@ -65,6 +92,13 @@ export default async function CaseDetailPage({
     size: a.size,
     uploadedByName: a.uploadedBy.name,
     canDelete: a.uploadedById === user.id || canManage,
+  }));
+
+  const comments = kase.comments.map((c) => ({
+    id: c.id,
+    body: c.body,
+    authorName: c.author.name,
+    createdAt: c.createdAt,
   }));
 
   return (
@@ -83,7 +117,7 @@ export default async function CaseDetailPage({
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <StatusBadge status={kase.status} />
+        <CaseStatusControl caseId={kase.id} status={kase.status} targets={statusTargets} />
         <PriorityBadge priority={kase.priority} />
       </div>
 
@@ -97,6 +131,17 @@ export default async function CaseDetailPage({
               <p className="whitespace-pre-wrap text-sm text-muted-foreground">
                 {kase.description}
               </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Comments{comments.length > 0 ? ` (${comments.length})` : ""}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CommentSection caseId={kase.id} comments={comments} />
             </CardContent>
           </Card>
 
@@ -130,16 +175,27 @@ export default async function CaseDetailPage({
                 label="Reporter"
                 value={kase.reporter.name ?? kase.reporter.email ?? "—"}
               />
-              <Detail
-                label="Assignee"
-                value={kase.assignee?.name ?? "Unassigned"}
-              />
+
+              {canAssign ? (
+                <div className="space-y-1.5">
+                  <span className="text-muted-foreground">Assignee</span>
+                  <CaseAssignControl
+                    caseId={kase.id}
+                    assigneeId={kase.assigneeId}
+                    members={members}
+                  />
+                </div>
+              ) : (
+                <Detail label="Assignee" value={kase.assignee?.name ?? "Unassigned"} />
+              )}
+
               <Detail label="Category" value={kase.category} />
               <Detail label="Created" value={formatDate(kase.createdAt)} />
               <Detail label="Due date" value={formatDate(kase.dueDate)} />
               {kase.resolvedAt && (
                 <Detail label="Resolved" value={formatDate(kase.resolvedAt)} />
               )}
+              {kase.closedAt && <Detail label="Closed" value={formatDate(kase.closedAt)} />}
             </CardContent>
           </Card>
         </div>

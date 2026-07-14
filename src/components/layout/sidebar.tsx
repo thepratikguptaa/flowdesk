@@ -6,10 +6,23 @@ import type { Role } from "@prisma/client";
 
 import { navForRole } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import {
+  NotificationBell,
+  type NotificationItem,
+} from "@/components/layout/notification-bell";
+import { SidebarUser } from "@/components/layout/sidebar-user";
 
-export function Sidebar({ role }: { role: Role }) {
+export function Sidebar({
+  user,
+  notifications,
+  unreadCount,
+}: {
+  user: { name: string | null; email: string | null; role: Role };
+  notifications: NotificationItem[];
+  unreadCount: number;
+}) {
   const pathname = usePathname();
-  const items = navForRole(role);
+  const items = navForRole(user.role);
 
   // Only the most specific matching route is active, so e.g. /cases/new
   // highlights "New case" and not also "Cases".
@@ -68,6 +81,18 @@ export function Sidebar({ role }: { role: Role }) {
           );
         })}
       </nav>
+
+      <div className="space-y-1 border-t p-3">
+        <NotificationBell
+          notifications={notifications}
+          unreadCount={unreadCount}
+          variant="row"
+        />
+      </div>
+
+      <div className="border-t p-3">
+        <SidebarUser name={user.name} email={user.email} role={user.role} />
+      </div>
     </aside>
   );
 }
