@@ -103,6 +103,11 @@ export async function assignCase(
     return { error: "You can only assign cases in your department." };
   }
 
+  // No-op: assignee unchanged — don't log an audit entry or fire an event.
+  if ((assigneeId ?? null) === (kase.assigneeId ?? null)) {
+    return { ok: true };
+  }
+
   let assigneeName = "Unassigned";
   if (assigneeId) {
     const assignee = await prisma.user.findUnique({ where: { id: assigneeId } });

@@ -27,9 +27,9 @@ const NAV: NavItem[] = [
   { label: "Cases", href: "/cases", icon: Inbox },
   { label: "New case", href: "/cases/new", icon: PlusCircle },
   { label: "Departments", href: "/departments", icon: Building2, minRole: "ADMIN" },
-  { label: "Analytics", href: "/analytics", icon: BarChart3, minRole: "MANAGER", soon: true },
+  { label: "Analytics", href: "/analytics", icon: BarChart3, minRole: "MANAGER" },
   { label: "Users", href: "/users", icon: Users, minRole: "ADMIN", soon: true },
-  { label: "Audit log", href: "/audit", icon: ScrollText, minRole: "ADMIN", soon: true },
+  { label: "Audit log", href: "/audit", icon: ScrollText, minRole: "ADMIN" },
 ];
 
 /** Nav items visible to a given role, in display order. */

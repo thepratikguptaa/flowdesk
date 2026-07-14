@@ -20,19 +20,21 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   ]);
 
   return (
-    <div className="flex min-h-dvh bg-muted/30">
+    <div className="flex h-dvh overflow-hidden bg-muted/30">
       <Sidebar
         user={sessionUser}
         notifications={notifications}
         unreadCount={unreadCount}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <MobileHeader
           user={sessionUser}
           notifications={notifications}
           unreadCount={unreadCount}
         />
-        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+          {children}
+        </main>
       </div>
     </div>
   );
