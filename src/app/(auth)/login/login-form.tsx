@@ -1,83 +1,142 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { Loader2 } from "lucide-react";
 
-import { loginAction, type LoginState } from "@/lib/actions/login";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="mt-2 flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
-    >
-      {pending ? "Signing in…" : "Sign in"}
-    </button>
-  );
-}
+const DEMO_ACCOUNTS = [
+  { label: "Admin", email: "admin@flowdesk.dev" },
+  { label: "Manager (IT)", email: "manager.it@flowdesk.dev" },
+  { label: "Staff (IT)", email: "staff.it@flowdesk.dev" },
+  { label: "Citizen", email: "citizen@flowdesk.dev" },
+];
+const DEMO_PASSWORD = "Password123!";
 
 export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
-  const [state, formAction] = useActionState<LoginState, FormData>(loginAction, {});
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function authenticate(emailValue: string, passwordValue: string) {
+    setError(null);
+    startTransition(async () => {
+      const res = await signIn("credentials", {
+        email: emailValue,
+        password: passwordValue,
+        redirect: false,
+      });
+      if (!res || res.error) {
+        setError("Invalid email or password.");
+        setDemoLoading(null);
+        return;
+      }
+      router.push(callbackUrl);
+      router.refresh();
+    });
+  }
+
+  function signInAsDemo(demoEmail: string) {
+    setEmail(demoEmail);
+    setPassword(DEMO_PASSWORD);
+    setDemoLoading(demoEmail);
+    authenticate(demoEmail, DEMO_PASSWORD);
+  }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="mb-6">
-        <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-          Welcome back
-        </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Sign in to your FlowDesk account.
+    <div>
+      <div className="mb-8">
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">Sign in</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Enter your credentials to continue.
         </p>
       </div>
 
-      <form action={formAction} className="space-y-4">
-        <input type="hidden" name="callbackUrl" value={callbackUrl} />
-
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          authenticate(email, password);
+        }}
+        className="space-y-4"
+      >
         <div className="space-y-1.5">
-          <label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Email
-          </label>
-          <input
+          <Label htmlFor="email">Email</Label>
+          <Input
             id="email"
             name="email"
             type="email"
             autoComplete="email"
             required
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
             placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Password
-          </label>
-          <input
+          <Label htmlFor="password">Password</Label>
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="current-password"
             required
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
             placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
-        {state.error && (
-          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-            {state.error}
+        {error && (
+          <p role="alert" className="rounded-sm bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
           </p>
         )}
 
-        <SubmitButton />
+        <Button type="submit" disabled={pending} className="w-full">
+          {pending && !demoLoading ? "Signing in…" : "Sign in"}
+        </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+      {/* Demo accounts — click to sign in instantly (handy for reviewers). */}
+      <div className="mt-8 border-t pt-6">
+        <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Demo accounts
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {DEMO_ACCOUNTS.map((acct) => (
+            <button
+              key={acct.email}
+              type="button"
+              disabled={pending}
+              onClick={() => signInAsDemo(acct.email)}
+              className="relative cursor-pointer rounded-sm border p-2.5 text-left transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+            >
+              <span className="flex items-center gap-1.5 text-sm font-medium">
+                {demoLoading === acct.email && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                )}
+                {acct.label}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {acct.email}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="mt-8 text-center text-sm text-muted-foreground">
         No account?{" "}
-        <Link href="/register" className="font-medium text-slate-900 underline-offset-4 hover:underline dark:text-white">
+        <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
           Create one
         </Link>
       </p>

@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 
 import { authConfig } from "@/auth.config";
 
-// Edge-safe middleware: uses the DB-free auth config to read the JWT session.
+// Edge-safe proxy (formerly "middleware"): uses the DB-free auth config to
+// read the JWT session and gate access before requests reach a route.
 const { auth } = NextAuth(authConfig);
 
-const PUBLIC_ROUTES = ["/login", "/register"];
+const PUBLIC_ROUTES = ["/", "/login", "/register"];
 const AUTH_ROUTES = ["/login", "/register"];
 
 export default auth((req) => {

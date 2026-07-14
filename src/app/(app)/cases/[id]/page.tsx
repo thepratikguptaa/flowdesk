@@ -1,0 +1,158 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Pencil } from "lucide-react";
+
+import { requireUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/prisma";
+import { canViewCase, canManageCase } from "@/lib/auth/rbac";
+import { formatCaseNumber } from "@/lib/constants";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge, PriorityBadge } from "@/components/cases/case-badges";
+import { CaseTimeline } from "@/components/cases/case-timeline";
+import { AttachmentsPanel } from "@/components/cases/attachments-panel";
+
+export const metadata: Metadata = { title: "Case detail" };
+
+function formatDate(d: Date | null) {
+  if (!d) return "—";
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(d);
+}
+
+export default async function CaseDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const user = await requireUser();
+  const { id } = await params;
+
+  const kase = await prisma.case.findUnique({
+    where: { id },
+    include: {
+      reporter: { select: { name: true, email: true } },
+      assignee: { select: { name: true, email: true } },
+      department: { select: { name: true } },
+      events: {
+        orderBy: { createdAt: "desc" },
+        include: { actor: { select: { name: true } } },
+      },
+      attachments: {
+        orderBy: { createdAt: "desc" },
+        include: { uploadedBy: { select: { name: true } } },
+      },
+    },
+  });
+
+  if (!kase) notFound();
+  if (!canViewCase(user, kase)) notFound();
+
+  const canManage = canManageCase(user, kase);
+  const canEdit =
+    canManage ||
+    (kase.reporterId === user.id &&
+      (kase.status === "SUBMITTED" || kase.status === "UNDER_REVIEW"));
+
+  const attachments = kase.attachments.map((a) => ({
+    id: a.id,
+    filename: a.filename,
+    mimeType: a.mimeType,
+    size: a.size,
+    uploadedByName: a.uploadedBy.name,
+    canDelete: a.uploadedById === user.id || canManage,
+  }));
+
+  return (
+    <div className="mx-auto max-w-4xl">
+      <PageHeader
+        title={kase.title}
+        description={`${formatCaseNumber(kase.caseNumber)} · ${kase.category}`}
+        action={
+          canEdit ? (
+            <Button variant="outline" render={<Link href={`/cases/${kase.id}/edit`} />}>
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Button>
+          ) : undefined
+        }
+      />
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <StatusBadge status={kase.status} />
+        <PriorityBadge priority={kase.priority} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Description</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                {kase.description}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Attachments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AttachmentsPanel caseId={kase.id} attachments={attachments} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CaseTimeline events={kase.events} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <Detail label="Department" value={kase.department.name} />
+              <Detail
+                label="Reporter"
+                value={kase.reporter.name ?? kase.reporter.email ?? "—"}
+              />
+              <Detail
+                label="Assignee"
+                value={kase.assignee?.name ?? "Unassigned"}
+              />
+              <Detail label="Category" value={kase.category} />
+              <Detail label="Created" value={formatDate(kase.createdAt)} />
+              <Detail label="Due date" value={formatDate(kase.dueDate)} />
+              {kase.resolvedAt && (
+                <Detail label="Resolved" value={formatDate(kase.resolvedAt)} />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right font-medium">{value}</span>
+    </div>
+  );
+}
