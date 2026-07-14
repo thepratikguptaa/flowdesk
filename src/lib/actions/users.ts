@@ -8,17 +8,14 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth/session";
 import { logAudit, logFieldChanges } from "@/lib/audit";
 import { ROLE_NEEDS_DEPARTMENT } from "@/lib/constants";
+import { type FormState, isUniqueConstraintError } from "@/lib/actions/form-state";
 import {
   createUserSchema,
   updateUserSchema,
   resetPasswordSchema,
 } from "@/lib/validation/user";
 
-export type ActionState = {
-  ok?: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-};
+export type ActionState = FormState;
 
 /** Roles without a department get their departmentId cleared, regardless of form input. */
 function departmentForRole(role: Role, departmentId?: string): string | null {
@@ -26,9 +23,9 @@ function departmentForRole(role: Role, departmentId?: string): string | null {
 }
 
 function friendlyWriteError(err: unknown): string {
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    if (err.code === "P2002") return "An account with that email already exists.";
-    if (err.code === "P2003") return "That department no longer exists. Refresh and try again.";
+  if (isUniqueConstraintError(err)) return "An account with that email already exists.";
+  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2003") {
+    return "That department no longer exists. Refresh and try again.";
   }
   return "Something went wrong. Please try again.";
 }

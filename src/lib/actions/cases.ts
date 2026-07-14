@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth/session";
 import { can, canManageCase, canViewCase } from "@/lib/auth/rbac";
 import { logAudit, logFieldChanges } from "@/lib/audit";
 import { createCaseSchema, updateCaseSchema } from "@/lib/validation/case";
+import type { FormState } from "@/lib/actions/form-state";
 import {
   MAX_ATTACHMENT_BYTES,
   isAllowedMime,
@@ -16,11 +17,7 @@ import {
 
 const MAX_CASE_IMAGES = 5;
 
-export type CaseActionState = {
-  ok?: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-};
+export type CaseActionState = FormState;
 
 export async function createCase(
   _prev: CaseActionState,

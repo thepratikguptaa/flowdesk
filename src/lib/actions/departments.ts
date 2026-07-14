@@ -1,18 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth/session";
 import { logAudit, logFieldChanges } from "@/lib/audit";
+import { type FormState, isUniqueConstraintError } from "@/lib/actions/form-state";
 import { departmentSchema } from "@/lib/validation/department";
 
-export type ActionState = {
-  ok?: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-};
+export type ActionState = FormState;
 
 export async function createDepartment(
   _prev: ActionState,
@@ -38,7 +34,7 @@ export async function createDepartment(
       newValue: dept.name,
     });
   } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+    if (isUniqueConstraintError(err)) {
       return { error: "A department with that name already exists." };
     }
     return { error: "Could not create department. Please try again." };
@@ -81,7 +77,7 @@ export async function updateDepartment(
       after: { name: updated.name, description: updated.description ?? null },
     });
   } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+    if (isUniqueConstraintError(err)) {
       return { error: "A department with that name already exists." };
     }
     return { error: "Could not update department. Please try again." };

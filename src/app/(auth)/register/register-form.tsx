@@ -10,11 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-
-function FieldError({ errors }: { errors?: string[] }) {
-  if (!errors?.length) return null;
-  return <p className="text-xs text-destructive">{errors[0]}</p>;
-}
+import { FieldError } from "@/components/ui/field-error";
 
 export function RegisterForm() {
   const router = useRouter();

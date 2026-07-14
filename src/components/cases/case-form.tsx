@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FieldError } from "@/components/ui/field-error";
 
 type Department = { id: string; name: string };
 
@@ -30,11 +31,6 @@ export type CaseFormValues = {
   departmentId?: string;
   dueDate?: string; // yyyy-mm-dd
 };
-
-function Err({ msg }: { msg?: string[] }) {
-  if (!msg?.length) return null;
-  return <p className="text-xs text-destructive">{msg[0]}</p>;
-}
 
 function SubmitButton({ editing }: { editing: boolean }) {
   const { pending } = useFormStatus();
@@ -86,7 +82,7 @@ export function CaseForm({
           placeholder="Short summary of the request or issue"
           required
         />
-        <Err msg={state.fieldErrors?.title} />
+        <FieldError errors={state.fieldErrors?.title} />
       </div>
 
       <div className="space-y-1.5">
@@ -99,7 +95,7 @@ export function CaseForm({
           rows={6}
           required
         />
-        <Err msg={state.fieldErrors?.description} />
+        <FieldError errors={state.fieldErrors?.description} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -117,7 +113,7 @@ export function CaseForm({
               ))}
             </SelectContent>
           </Select>
-          <Err msg={state.fieldErrors?.category} />
+          <FieldError errors={state.fieldErrors?.category} />
         </div>
 
         <div className="space-y-1.5">
@@ -140,7 +136,7 @@ export function CaseForm({
               ))}
             </SelectContent>
           </Select>
-          <Err msg={state.fieldErrors?.departmentId} />
+          <FieldError errors={state.fieldErrors?.departmentId} />
         </div>
 
         <div className="space-y-1.5">
@@ -193,7 +189,7 @@ export function CaseForm({
             multiple
             className="file:mr-3 file:cursor-pointer file:rounded-sm file:border-0 file:bg-muted file:px-2 file:py-0.5 file:text-xs file:font-medium"
           />
-          <Err msg={state.fieldErrors?.attachments} />
+          <FieldError errors={state.fieldErrors?.attachments} />
           <p className="text-xs text-muted-foreground">
             Attach screenshots or photos — PNG, JPG, GIF, or WebP, up to 10 MB each.
           </p>

@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FieldError } from "@/components/ui/field-error";
 
 type Department = { id: string; name: string };
 
@@ -36,11 +37,6 @@ export type UserFormValues = {
   role: Role;
   departmentId: string | null;
 };
-
-function Err({ msg }: { msg?: string[] }) {
-  if (!msg?.length) return null;
-  return <p className="text-xs text-destructive">{msg[0]}</p>;
-}
 
 export function UserFormDialog({
   user,
@@ -114,7 +110,7 @@ export function UserFormDialog({
               required
               autoFocus
             />
-            <Err msg={state.fieldErrors?.name} />
+            <FieldError errors={state.fieldErrors?.name} />
           </div>
 
           <div className="space-y-1.5">
@@ -127,7 +123,7 @@ export function UserFormDialog({
               placeholder="jordan@flowdesk.dev"
               required
             />
-            <Err msg={state.fieldErrors?.email} />
+            <FieldError errors={state.fieldErrors?.email} />
           </div>
 
           {!editing && (
@@ -140,7 +136,7 @@ export function UserFormDialog({
                 placeholder="At least 8 characters"
                 required
               />
-              <Err msg={state.fieldErrors?.password} />
+              <FieldError errors={state.fieldErrors?.password} />
               <p className="text-xs text-muted-foreground">
                 Share this with the user so they can sign in. You can reset it later.
               </p>
@@ -167,7 +163,7 @@ export function UserFormDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <Err msg={state.fieldErrors?.role} />
+              <FieldError errors={state.fieldErrors?.role} />
             </div>
 
             {needsDept && (
@@ -190,7 +186,7 @@ export function UserFormDialog({
                     ))}
                   </SelectContent>
                 </Select>
-                <Err msg={state.fieldErrors?.departmentId} />
+                <FieldError errors={state.fieldErrors?.departmentId} />
               </div>
             )}
           </div>

@@ -1,9 +1,9 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { isUniqueConstraintError } from "@/lib/actions/form-state";
 import { registerSchema } from "@/lib/validation/auth";
 
 export type RegisterState = {
@@ -41,7 +41,7 @@ export async function registerUser(
   } catch (err) {
     // Unique constraint on email → friendly message, no enumeration leak beyond
     // what a login attempt would already reveal.
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+    if (isUniqueConstraintError(err)) {
       return { error: "An account with that email already exists." };
     }
     return { error: "Something went wrong. Please try again." };
