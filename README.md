@@ -11,10 +11,6 @@ It isn't a to-do list with extra steps. Every case moves through a real **workfl
 lands with the **right person**, gathers its **discussion and evidence** in one place,
 and leaves an **immutable trail** you can stand behind in any review or audit.
 
-> **Live demo:** _add your Vercel URL here_ · **Repository:** <https://github.com/thepratikguptaa/flowdesk>
->
-> Sign in with a one-click demo account (below) — no setup required.
-
 ---
 
 ## Why FlowDesk
