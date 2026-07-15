@@ -68,7 +68,7 @@ export function UserFilters() {
       </form>
 
       <Select
-        defaultValue={params.get("role") ?? ALL}
+        value={params.get("role") ?? ALL}
         items={roleItems}
         onValueChange={(v) => apply({ role: v })}
       >
@@ -86,7 +86,7 @@ export function UserFilters() {
       </Select>
 
       <Select
-        defaultValue={params.get("status") ?? ALL}
+        value={params.get("status") ?? ALL}
         items={statusItems}
         onValueChange={(v) => apply({ status: v })}
       >

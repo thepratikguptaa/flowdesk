@@ -2,6 +2,17 @@ const GITHUB_URL = "https://github.com/thepratikguptaa";
 const LINKEDIN_URL = "https://www.linkedin.com/in/thepratikguptaa/";
 const AUTHOR = "Pratik Gupta";
 
+const TECH = [
+  "Next.js",
+  "React",
+  "TypeScript",
+  "Tailwind CSS",
+  "PostgreSQL",
+  "Prisma",
+  "Vercel",
+  "Auth.js",
+];
+
 function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden {...props}>
@@ -23,12 +34,25 @@ export function Footer() {
 
   return (
     <footer className="border-t">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-5 text-sm text-muted-foreground sm:flex-row">
-        <p>
-          © {year} FlowDesk · Built by{" "}
-          <span className="font-medium text-foreground">{AUTHOR}</span>
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+          Built with modern technologies
         </p>
-        <nav className="flex items-center gap-5">
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          {TECH.map((name) => (
+            <span key={name} className="inline-flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary/50" aria-hidden />
+              {name}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t pt-6 text-sm text-muted-foreground sm:flex-row">
+          <p>
+            © {year} FlowDesk · Built by{" "}
+            <span className="font-medium text-foreground">{AUTHOR}</span>
+          </p>
+          <nav className="flex items-center gap-5">
           <a
             href={GITHUB_URL}
             target="_blank"
@@ -47,7 +71,8 @@ export function Footer() {
             <LinkedinIcon className="h-4 w-4" />
             LinkedIn
           </a>
-        </nav>
+          </nav>
+        </div>
       </div>
     </footer>
   );

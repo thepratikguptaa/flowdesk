@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
@@ -106,13 +105,6 @@ export function RegisterForm() {
           {pending ? "Creating account…" : "Create account"}
         </Button>
       </form>
-
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
-          Sign in
-        </Link>
-      </p>
     </div>
   );
 }

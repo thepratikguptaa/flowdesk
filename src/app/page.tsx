@@ -65,17 +65,6 @@ const FEATURES: { icon: LucideIcon; title: string; text: string }[] = [
   },
 ];
 
-const TECH = [
-  "Next.js",
-  "React",
-  "TypeScript",
-  "Tailwind CSS",
-  "PostgreSQL",
-  "Prisma",
-  "Vercel",
-  "Auth.js",
-];
-
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-primary">
@@ -211,20 +200,6 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Tech */}
-        <section className="border-t py-16">
-          <div className="mx-auto max-w-6xl px-6">
-            <Eyebrow>Built with modern technologies</Eyebrow>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
-              {TECH.map((name) => (
-                <span key={name} className="inline-flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary/50" aria-hidden />
-                  {name}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
       </main>
 
       <div id="footer">

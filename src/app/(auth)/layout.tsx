@@ -1,18 +1,26 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
-import { BrandPanel } from "@/components/auth/brand-panel";
+import { AuthNavLink } from "@/components/auth/auth-nav-link";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-2">
-      {/* Left: brand panel (hidden on small screens) */}
-      <aside className="relative hidden items-center justify-center bg-muted px-10 lg:flex">
-        <BrandPanel />
-      </aside>
+    <div className="flex min-h-dvh flex-col bg-muted/20">
+      {/* Slim top bar with the wordmark + the opposite auth action */}
+      <header className="border-b bg-background">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
+          <Link href="/" className="font-heading text-lg font-semibold tracking-tight">
+            FlowDesk
+          </Link>
+          <AuthNavLink />
+        </div>
+      </header>
 
-      {/* Right: form area */}
-      <main className="flex items-center justify-center px-6 py-12 sm:px-10">
-        <div className="w-full max-w-sm">{children}</div>
+      {/* Centered form card */}
+      <main className="flex flex-1 items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md rounded-lg border bg-card p-8 shadow-sm">
+          {children}
+        </div>
       </main>
     </div>
   );

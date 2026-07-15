@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
@@ -10,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const DEMO_ACCOUNTS = [
   { label: "Admin", email: "admin@flowdesk.dev" },
@@ -18,6 +24,7 @@ const DEMO_ACCOUNTS = [
   { label: "Citizen", email: "citizen@flowdesk.dev" },
 ];
 const DEMO_PASSWORD = "Password123!";
+const demoItems = Object.fromEntries(DEMO_ACCOUNTS.map((a) => [a.email, a.label]));
 
 export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
   const router = useRouter();
@@ -106,40 +113,43 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
         </Button>
       </form>
 
-      {/* Demo accounts — click to sign in instantly (handy for reviewers). */}
+      {/* Demo accounts — pick a role to sign in instantly (handy for reviewers). */}
       <div className="mt-8 border-t pt-6">
-        <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Demo accounts
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {DEMO_ACCOUNTS.map((acct) => (
-            <button
-              key={acct.email}
-              type="button"
-              disabled={pending}
-              onClick={() => signInAsDemo(acct.email)}
-              className="relative cursor-pointer rounded-sm border p-2.5 text-left transition-colors hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
-            >
-              <span className="flex items-center gap-1.5 text-sm font-medium">
-                {demoLoading === acct.email && (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                )}
+        <Label
+          htmlFor="demo-role"
+          className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+        >
+          Or explore a demo role
+        </Label>
+        <Select
+          items={demoItems}
+          disabled={pending}
+          onValueChange={(value) => {
+            if (value) signInAsDemo(String(value));
+          }}
+        >
+          <SelectTrigger
+            id="demo-role"
+            className="mt-2 w-full"
+            aria-label="Sign in as a demo role"
+          >
+            <SelectValue placeholder="Sign in as…" />
+          </SelectTrigger>
+          <SelectContent>
+            {DEMO_ACCOUNTS.map((acct) => (
+              <SelectItem key={acct.email} value={acct.email}>
                 {acct.label}
-              </span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {acct.email}
-              </span>
-            </button>
-          ))}
-        </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {demoLoading && (
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Signing in…
+          </p>
+        )}
       </div>
-
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        No account?{" "}
-        <Link href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
-          Create one
-        </Link>
-      </p>
     </div>
   );
 }

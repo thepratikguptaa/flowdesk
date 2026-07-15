@@ -67,7 +67,7 @@ export function CaseFilters() {
       </form>
 
       <Select
-        defaultValue={params.get("status") ?? ALL}
+        value={params.get("status") ?? ALL}
         items={statusItems}
         onValueChange={(v) => apply({ status: v })}
       >
@@ -85,7 +85,7 @@ export function CaseFilters() {
       </Select>
 
       <Select
-        defaultValue={params.get("priority") ?? ALL}
+        value={params.get("priority") ?? ALL}
         items={priorityItems}
         onValueChange={(v) => apply({ priority: v })}
       >
