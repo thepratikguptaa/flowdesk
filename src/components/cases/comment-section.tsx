@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useOptimistic, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ export type CommentItem = {
   body: string;
   authorName: string | null;
   createdAt: Date;
+  pending?: boolean;
 };
 
 function initials(name: string | null) {
@@ -28,21 +29,41 @@ function when(d: Date) {
 export function CommentSection({
   caseId,
   comments,
+  currentUserName,
 }: {
   caseId: string;
   comments: CommentItem[];
+  currentUserName: string | null;
 }) {
   const router = useRouter();
   const [body, setBody] = useState("");
   const [pending, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Optimistically show the new comment immediately; the server round trip
+  // and router.refresh() reconcile it with the real record afterwards.
+  const [optimisticComments, addOptimisticComment] = useOptimistic(
+    comments,
+    (state, newBody: string): CommentItem[] => [
+      ...state,
+      {
+        id: `pending-${state.length}`,
+        body: newBody,
+        authorName: currentUserName,
+        createdAt: new Date(),
+        pending: true,
+      },
+    ],
+  );
+
   function submit() {
-    if (!body.trim()) return;
+    const text = body.trim();
+    if (!text) return;
     startTransition(async () => {
-      const res = await addComment(caseId, body);
+      addOptimisticComment(text);
+      setBody("");
+      const res = await addComment(caseId, text);
       if (res.ok) {
-        setBody("");
         router.refresh();
       } else {
         toast.error(res.error ?? "Could not post comment");
@@ -52,12 +73,12 @@ export function CommentSection({
 
   return (
     <div className="space-y-4">
-      {comments.length === 0 ? (
+      {optimisticComments.length === 0 ? (
         <p className="text-sm text-muted-foreground">No comments yet.</p>
       ) : (
         <ul className="space-y-4">
-          {comments.map((c) => (
-            <li key={c.id} className="flex gap-3">
+          {optimisticComments.map((c) => (
+            <li key={c.id} className={c.pending ? "flex gap-3 opacity-60" : "flex gap-3"}>
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="text-[10px] font-medium">
                   {initials(c.authorName)}

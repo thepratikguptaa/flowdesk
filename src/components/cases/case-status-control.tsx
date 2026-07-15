@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
@@ -28,9 +28,13 @@ export function CaseStatusControl({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  // Reflect the new status on the badge immediately; reverts automatically if
+  // the action fails (no router.refresh() to overwrite the base prop).
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic(status);
 
   function move(to: CaseStatus) {
     startTransition(async () => {
+      setOptimisticStatus(to);
       const res = await changeCaseStatus(caseId, to);
       if (res.ok) {
         toast.success(`Status changed to ${STATUS_META[to].label}`);
@@ -42,12 +46,12 @@ export function CaseStatusControl({
   }
 
   if (targets.length === 0) {
-    return <StatusBadge status={status} />;
+    return <StatusBadge status={optimisticStatus} />;
   }
 
   return (
     <div className="flex items-center gap-2">
-      <StatusBadge status={status} />
+      <StatusBadge status={optimisticStatus} />
       <DropdownMenu>
         <DropdownMenuTrigger
           render={<Button variant="outline" size="sm" disabled={pending} />}

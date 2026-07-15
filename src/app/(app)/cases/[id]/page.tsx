@@ -156,7 +156,11 @@ export default async function CaseDetailPage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CommentSection caseId={kase.id} comments={comments} />
+              <CommentSection
+                caseId={kase.id}
+                comments={comments}
+                currentUserName={user.name}
+              />
             </CardContent>
           </Card>
 
