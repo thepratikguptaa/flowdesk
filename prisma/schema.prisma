@@ -75,6 +75,8 @@ model User {
   role         Role     @default(CITIZEN)
   departmentId String?
   isActive     Boolean  @default(true)
+  // Bumped on password reset / deactivation to invalidate existing JWT sessions.
+  tokenVersion Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

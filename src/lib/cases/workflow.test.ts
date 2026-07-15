@@ -33,11 +33,20 @@ describe("availableStatusTargets", () => {
     departmentId: "it",
   };
   const managerIT = { id: "m1", role: "MANAGER" as const, departmentId: "it" };
+  const admin = { id: "a1", role: "ADMIN" as const, departmentId: null };
+  const assignee = { id: "s1", role: "STAFF" as const, departmentId: "it" };
   const reporter = { id: "c1", role: "CITIZEN" as const, departmentId: null };
   const stranger = { id: "x", role: "CITIZEN" as const, departmentId: null };
 
   it("gives managers the full set of legal moves", () => {
     expect(availableStatusTargets(managerIT, itCase)).toEqual(allowedTransitions("IN_PROGRESS"));
+  });
+  it("gives admins the full set of legal moves on any case", () => {
+    const hrCase = { ...itCase, departmentId: "hr", assigneeId: null };
+    expect(availableStatusTargets(admin, hrCase)).toEqual(allowedTransitions("IN_PROGRESS"));
+  });
+  it("gives the assigned staff the full set of legal moves", () => {
+    expect(availableStatusTargets(assignee, itCase)).toEqual(allowedTransitions("IN_PROGRESS"));
   });
   it("gives unrelated users nothing", () => {
     expect(availableStatusTargets(stranger, itCase)).toEqual([]);

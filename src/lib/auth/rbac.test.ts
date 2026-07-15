@@ -59,3 +59,32 @@ describe("canManageCase", () => {
     expect(canManageCase(citizen, itCase)).toBe(false);
   });
 });
+
+describe("RBAC edge cases", () => {
+  it("scopes more capabilities correctly", () => {
+    expect(can("STAFF", "case:changeStatusAny")).toBe(true);
+    expect(can("CITIZEN", "case:changeStatusAny")).toBe(false);
+    expect(can("MANAGER", "case:changePriority")).toBe(true);
+    expect(can("STAFF", "case:changePriority")).toBe(false);
+    expect(can("ADMIN", "audit:view")).toBe(true);
+    expect(can("MANAGER", "audit:view")).toBe(false);
+  });
+
+  it("does not let a manager act on another department's case", () => {
+    expect(canViewCase(managerIT, hrCase)).toBe(false);
+    expect(canManageCase(managerIT, hrCase)).toBe(false);
+  });
+
+  it("lets an assignee manage a case even outside their own department", () => {
+    const staffHR = { id: "s1", role: "STAFF" as const, departmentId: "hr" };
+    // itCase is in "it" but assigned to s1 (this staffer is in "hr").
+    expect(canViewCase(staffHR, itCase)).toBe(true);
+    expect(canManageCase(staffHR, itCase)).toBe(true);
+  });
+
+  it("blocks staff from a case outside their dept that isn't theirs", () => {
+    const staffHR = { id: "sx", role: "STAFF" as const, departmentId: "hr" };
+    expect(canViewCase(staffHR, itCase)).toBe(false);
+    expect(canManageCase(staffHR, itCase)).toBe(false);
+  });
+});

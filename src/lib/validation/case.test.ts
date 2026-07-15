@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { createCaseSchema } from "./case";
+import { createCaseSchema, updateCaseSchema } from "./case";
 
 const base = {
   title: "Printer not working on floor 3",
@@ -34,5 +34,31 @@ describe("createCaseSchema", () => {
     const r = createCaseSchema.safeParse({ ...base, dueDate: today, priority: undefined });
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.priority).toBe("MEDIUM");
+  });
+});
+
+describe("updateCaseSchema", () => {
+  it("accepts a valid update", () => {
+    expect(updateCaseSchema.safeParse(base).success).toBe(true);
+  });
+
+  it("requires an explicit priority (no default)", () => {
+    const r = updateCaseSchema.safeParse({ ...base, priority: undefined });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects a short title and a missing department", () => {
+    expect(updateCaseSchema.safeParse({ ...base, title: "hi" }).success).toBe(false);
+    expect(updateCaseSchema.safeParse({ ...base, departmentId: "" }).success).toBe(false);
+  });
+
+  it("rejects a past due date", () => {
+    expect(updateCaseSchema.safeParse({ ...base, dueDate: "2000-01-01" }).success).toBe(false);
+  });
+
+  it("normalizes an absent due date to null (so it can be cleared)", () => {
+    const r = updateCaseSchema.safeParse({ ...base, dueDate: undefined });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.dueDate).toBeNull();
   });
 });

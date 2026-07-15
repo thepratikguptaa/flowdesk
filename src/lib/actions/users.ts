@@ -151,7 +151,12 @@ export async function setUserActive(
   if (!existing) return { error: "User not found." };
   if (existing.isActive === active) return { ok: true }; // no-op
 
-  await prisma.user.update({ where: { id }, data: { isActive: active } });
+  await prisma.user.update({
+    where: { id },
+    // Deactivating also bumps tokenVersion so any live session is cut off now,
+    // not just blocked at next sign-in.
+    data: active ? { isActive: true } : { isActive: false, tokenVersion: { increment: 1 } },
+  });
   await logAudit({
     userId: admin.id,
     action: active ? "user.reactivate" : "user.deactivate",
@@ -183,7 +188,11 @@ export async function resetUserPassword(
   if (!existing) return { error: "User not found." };
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
-  await prisma.user.update({ where: { id }, data: { passwordHash } });
+  // Bump tokenVersion so any existing JWT sessions for this user are invalidated.
+  await prisma.user.update({
+    where: { id },
+    data: { passwordHash, tokenVersion: { increment: 1 } },
+  });
 
   // Never record the password value itself in the audit trail.
   await logAudit({

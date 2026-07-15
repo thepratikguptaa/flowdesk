@@ -22,6 +22,7 @@ export const authConfig = {
         token.role = user.role;
         token.departmentId = user.departmentId ?? null;
         token.name = user.name;
+        token.tokenVersion = user.tokenVersion ?? 0;
       }
       return token;
     },
@@ -30,6 +31,8 @@ export const authConfig = {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
         session.user.departmentId = token.departmentId as string | null;
+        // `?? 0` keeps sessions minted before this field existed valid.
+        session.user.tokenVersion = (token.tokenVersion as number | undefined) ?? 0;
       }
       return session;
     },

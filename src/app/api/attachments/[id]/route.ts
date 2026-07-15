@@ -4,11 +4,22 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canViewCase } from "@/lib/auth/rbac";
 
+// Only raster image types are safe to render inline. Notably this EXCLUDES
+// image/svg+xml, which can carry <script>/onload and would execute in the
+// document's origin if shown inline. Everything else is forced to download.
+const INLINE_SAFE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+]);
+
 /**
  * Secure attachment download.
  *  - Requires an authenticated user who can view the parent case.
- *  - Images are served inline; everything else is forced to download.
- *  - `X-Content-Type-Options: nosniff` prevents MIME sniffing / drive-by XSS.
+ *  - Only raster images are served inline; SVG/PDF/documents are downloaded.
+ *  - `nosniff` blocks MIME sniffing; a locked-down CSP + sandbox neutralizes any
+ *    active content (e.g. scripted SVG) even if a browser tries to render it.
  */
 export async function GET(
   _req: Request,
@@ -31,7 +42,7 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const isImage = attachment.mimeType.startsWith("image/");
+  const inline = INLINE_SAFE_TYPES.has(attachment.mimeType);
   const encodedName = encodeURIComponent(attachment.filename);
   const body = new Uint8Array(attachment.blob.data);
 
@@ -41,7 +52,9 @@ export async function GET(
       "Content-Type": attachment.mimeType,
       "Content-Length": String(attachment.size),
       "X-Content-Type-Options": "nosniff",
-      "Content-Disposition": `${isImage ? "inline" : "attachment"}; filename*=UTF-8''${encodedName}`,
+      // Neutralize any active content in the served file (scripted SVG, etc.).
+      "Content-Security-Policy": "default-src 'none'; sandbox",
+      "Content-Disposition": `${inline ? "inline" : "attachment"}; filename*=UTF-8''${encodedName}`,
       "Cache-Control": "private, max-age=0, must-revalidate",
     },
   });
