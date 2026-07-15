@@ -28,7 +28,14 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
 
   const account = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { isActive: true, tokenVersion: true },
+    select: {
+      isActive: true,
+      tokenVersion: true,
+      name: true,
+      email: true,
+      role: true,
+      departmentId: true,
+    },
   });
   if (
     !account ||
@@ -38,12 +45,14 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
     return null;
   }
 
+  // Source identity fields from the DB row (not the JWT) so profile edits and
+  // renames appear immediately without forcing a re-login.
   return {
     id: session.user.id,
-    name: session.user.name ?? null,
-    email: session.user.email ?? null,
-    role: session.user.role,
-    departmentId: session.user.departmentId,
+    name: account.name,
+    email: account.email,
+    role: account.role,
+    departmentId: account.departmentId,
   };
 });
 
